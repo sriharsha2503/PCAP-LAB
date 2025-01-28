@@ -1,0 +1,88 @@
+#include "mpi.h"
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char *argv[]) {
+    int rank, size;
+    char word1[100], word2[100];
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int l1 = 0, l2 = 0; // Length of word1 and word2
+
+    if (rank == 0) {
+        printf("Enter your string1: ");
+        scanf("%s", word1);
+        printf("Enter your string2: ");
+        scanf("%s", word2);
+
+        l1 = strlen(word1);
+        l2 = strlen(word2);
+
+        // Ensure both strings have the same length
+        if (l1 != l2) {
+            printf("Error: Both strings must have the same length.\n");
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+    }
+
+    // Broadcast the length of the strings
+    MPI_Bcast(&l1, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    int chunk_size = l1 / size;          // Equal division among processes
+    int remainder = l1 % size;          // Remaining characters for root process
+
+    char subword1[chunk_size + 1];      // Buffer for substrings
+    char subword2[chunk_size + 1];      // Include extra space for null terminator
+    char extra1[remainder + 1];         // Buffer for remainder at root
+    char extra2[remainder + 1];
+
+    if (rank == 0) {
+        // Scatter equal chunks
+        MPI_Scatter(word1, chunk_size, MPI_CHAR, subword1, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Scatter(word2, chunk_size, MPI_CHAR, subword2, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+        // Copy the remainder to root's buffers
+        strncpy(extra1, word1 + (chunk_size * size), remainder);
+        strncpy(extra2, word2 + (chunk_size * size), remainder);
+        extra1[remainder] = '\0';
+        extra2[remainder] = '\0';
+    } else {
+        // Non-root processes receive chunks
+        MPI_Scatter(NULL, chunk_size, MPI_CHAR, subword1, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Scatter(NULL, chunk_size, MPI_CHAR, subword2, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+    }
+
+    subword1[chunk_size] = '\0'; // Null terminate chunks
+    subword2[chunk_size] = '\0';
+
+    char res[2 * chunk_size + 1]; // Local interleaved result
+    int index = 0;
+
+    // Interleave the characters from the two substrings
+    for (int i = 0; i < chunk_size; i++) {
+        res[index++] = subword1[i];
+        res[index++] = subword2[i];
+    }
+    res[index] = '\0';
+
+    // Gather results back to the root process
+    char finalresult[2 * l1 + 1];
+    MPI_Gather(res, 2 * chunk_size, MPI_CHAR, finalresult, 2 * chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        // Append the interleaved remainder to the final result
+        index = 2 * chunk_size * size;
+        for (int i = 0; i < remainder; i++) {
+            finalresult[index++] = extra1[i];
+            finalresult[index++] = extra2[i];
+        }
+        finalresult[index] = '\0';
+
+        printf("Result: %s\n", finalresult);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
