@@ -1,0 +1,7 @@
+Error Description: MPI_Comm_rank failed with MPI_COMM_NULL
+MPI Error Code: 403264261
+MPI Error Class: 5
+MPI Error Message: Invalid communicator, error stack:
+internal_Comm_rank(74): MPI_Comm_rank(MPI_COMM_NULL, rank=0x7ffd60a6aa60) failed
+internal_Comm_rank(41): Null communicator
+sum of all the factorial at process 0 is=1
