@@ -133,11 +133,18 @@ int main(int argc, char *argv[]) {
 #include "mpi.h"
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
-// Function to compare characters in descending order
-int compare_desc(const void *a, const void *b) {
-    return (*(char*)b - *(char*)a);
+// Function to sort a string in descending order
+void sort_descending(char *str, int len) {
+    for (int i = 0; i < len - 1; i++) {
+        for (int j = i + 1; j < len; j++) {
+            if (str[i] < str[j]) {
+                char temp = str[i];
+                str[i] = str[j];
+                str[j] = temp;
+            }
+        }
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -168,7 +175,7 @@ int main(int argc, char *argv[]) {
     MPI_Scatter(input, chunk_size, MPI_CHAR, subword, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
     // Sort the local substring in descending order
-    qsort(subword, chunk_size, sizeof(char), compare_desc);
+    sort_descending(subword, chunk_size);
 
     // Gather the sorted substrings
     MPI_Gather(subword, chunk_size, MPI_CHAR, sorted, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -181,7 +188,7 @@ int main(int argc, char *argv[]) {
 
     if (rank == 0) {
         // Sort the entire collected result in descending order
-        qsort(sorted, length, sizeof(char), compare_desc);
+        sort_descending(sorted, length);
         sorted[length] = '\0';
         printf("Sorted String in Descending Order: %s\n", sorted);
     }
