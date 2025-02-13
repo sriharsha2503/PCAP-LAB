@@ -71,3 +71,122 @@ int main(int argc, char *argv[]) {
     MPI_Finalize();
     return 0;
 }
+============================================================================================================
+    //string reversal
+    #include "mpi.h"
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char *argv[]) {
+    int rank, size;
+    char input[100], reversed[100];
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int length = 0;
+
+    if (rank == 0) {
+        printf("Enter a string: ");
+        scanf("%s", input);
+        length = strlen(input);
+    }
+
+    // Broadcast the length to all processes
+    MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    int chunk_size = length / size;
+    int remainder = length % size;
+
+    char subword[chunk_size + 1];
+    subword[chunk_size] = '\0';
+
+    // Scatter the string to all processes
+    MPI_Scatter(input, chunk_size, MPI_CHAR, subword, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+    // Reverse the local substring
+    for (int i = 0; i < chunk_size / 2; i++) {
+        char temp = subword[i];
+        subword[i] = subword[chunk_size - i - 1];
+        subword[chunk_size - i - 1] = temp;
+    }
+
+    // Gather the reversed substrings
+    MPI_Gather(subword, chunk_size, MPI_CHAR, reversed, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+    if (rank == 0 && remainder > 0) {
+        for (int i = 0; i < remainder; i++) {
+            reversed[length - remainder + i] = input[length - 1 - i];
+        }
+    }
+
+    if (rank == 0) {
+        reversed[length] = '\0';
+        printf("Reversed String: %s\n", reversed);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+===========================================================================================================
+//string sort
+#include "mpi.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+// Function to compare characters in descending order
+int compare_desc(const void *a, const void *b) {
+    return (*(char*)b - *(char*)a);
+}
+
+int main(int argc, char *argv[]) {
+    int rank, size;
+    char input[100], sorted[100];
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int length = 0;
+
+    if (rank == 0) {
+        printf("Enter a string: ");
+        scanf("%s", input);
+        length = strlen(input);
+    }
+
+    // Broadcast the length to all processes
+    MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    int chunk_size = length / size;
+    int remainder = length % size;
+
+    char subword[chunk_size + 1];
+    subword[chunk_size] = '\0';
+
+    // Scatter the string to all processes
+    MPI_Scatter(input, chunk_size, MPI_CHAR, subword, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+    // Sort the local substring in descending order
+    qsort(subword, chunk_size, sizeof(char), compare_desc);
+
+    // Gather the sorted substrings
+    MPI_Gather(subword, chunk_size, MPI_CHAR, sorted, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+    if (rank == 0 && remainder > 0) {
+        for (int i = 0; i < remainder; i++) {
+            sorted[length - remainder + i] = input[length - 1 - i];
+        }
+    }
+
+    if (rank == 0) {
+        // Sort the entire collected result in descending order
+        qsort(sorted, length, sizeof(char), compare_desc);
+        sorted[length] = '\0';
+        printf("Sorted String in Descending Order: %s\n", sorted);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+======================================================================================    
