@@ -119,6 +119,10 @@ int main(int argc, char *argv[]) {
             reversed[length - remainder + i] = input[length - 1 - i];
         }
     }
+//for (int i = 0; i < remainder; i++) {
+//    reversed[i] = input[length - 1 - i];
+//}
+
 
     if (rank == 0) {
         reversed[length] = '\0';
