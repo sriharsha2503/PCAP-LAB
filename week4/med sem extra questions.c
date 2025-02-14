@@ -114,19 +114,19 @@ int main(int argc, char *argv[]) {
     // Gather the reversed substrings
     MPI_Gather(subword, chunk_size, MPI_CHAR, reversed, chunk_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
+    char rev[100];
+    
     if (rank == 0 && remainder > 0) {
         for (int i = 0; i < remainder; i++) {
-            reversed[length - remainder + i] = input[length - 1 - i];
+            rev1[i]=in[len-1-i];
         }
+        rev1[remainder]='\0';
     }
-//for (int i = 0; i < remainder; i++) {
-//    reversed[i] = input[length - 1 - i];
-//}
-
 
     if (rank == 0) {
-        reversed[length] = '\0';
-        printf("Reversed String: %s\n", reversed);
+        strcat(rev1,reversed);
+        rev1[length] = '\0';
+        printf("Reversed String: %s\n", rev1);
     }
 
     MPI_Finalize();
