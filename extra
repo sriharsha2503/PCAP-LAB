@@ -1,0 +1,45 @@
+int main() {
+    int N;
+    printf("Enter the size of the matrix (N x N): ");
+    scanf("%d", &N);
+
+    size_t size = N * N * sizeof(float);
+
+    // Allocate memory for matrices
+    float *A = (float *)malloc(size);
+    float *B = (float *)malloc(size);
+    float *C = (float *)malloc(size);
+
+    // Input Matrix A
+    printf("\nEnter elements of Matrix A (%d x %d):\n", N, N);
+    for (int i = 0; i < N * N; i++) {
+        printf("A[%d][%d]: ", i / N, i % N);
+        scanf("%f", &A[i]);
+    }
+
+    // Input Matrix B
+    printf("\nEnter elements of Matrix B (%d x %d):\n", N, N);
+    for (int i = 0; i < N * N; i++) {
+        printf("B[%d][%d]: ", i / N, i % N);
+        scanf("%f", &B[i]);
+    }
+
+    printf("\nMatrix A:\n");
+    printMatrix(A, N);
+
+    printf("\nMatrix B:\n");
+    printMatrix(B, N);
+
+    // Perform matrix multiplication
+    matrixMultiplicationHost(A, B, C, N);
+
+    printf("\nMatrix C (Result):\n");
+    printMatrix(C, N);
+
+    // Free memory
+    free(A);
+    free(B);
+    free(C);
+
+    return 0;
+}
